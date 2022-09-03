@@ -20,4 +20,15 @@ public class RestTemplateConfig {
 
         return builder.build();
     }
+
+    /*
+    // I do not know why but ApplicationContext does not recognized as a bean so in the integration test it can not be Autowired
+    // it seems adding this bean here solves this issue
+    @Bean
+    public ApplicationContext applicationContext(){
+
+        return new ApplicationContext(new StandardContext());
+    }
+    */
+
 }
