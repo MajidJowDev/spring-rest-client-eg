@@ -2,6 +2,7 @@ package mjz.springframework.springrestclienteg.controllers;
 
 
 import lombok.extern.slf4j.Slf4j;
+import mjz.springframework.api.domain.User;
 import mjz.springframework.springrestclienteg.services.ApiService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -30,11 +32,12 @@ public class UserController {
     @PostMapping("/users")
     public String formPost(Model model, ServerWebExchange serverWebExchange){
 
+        /*
         // this line gets the form data (we used to use the request parameters)
         // but the Reactive way is to use the ServerWebExchange, so we get the limit of API result from the form data
          MultiValueMap<String, String> map = serverWebExchange.getFormData().block();
         //Mono<MultiValueMap<String, String>>  monoMap = serverWebExchange.getFormData();
-        /*MultiValueMap<String, String> map = monoMap.subscribe();*/
+        ///*MultiValueMap<String, String> map = monoMap.subscribe();* /
 
         // getting the data from the "limit" field in the form that is submitted
         Integer limit = Integer.valueOf(map.get("limit").get(0));
@@ -47,6 +50,18 @@ public class UserController {
         }
 
         model.addAttribute("users", apiService.getUsers(limit));
+        */
+
+        Flux<User> users = apiService
+                .getUsers(serverWebExchange
+                        .getFormData()
+                        .map(data -> new Integer(data.getFirst("limit"))));
+        model.addAttribute("users",
+                apiService
+                        .getUsers(serverWebExchange
+                                .getFormData()
+                                .map(data -> new Integer(data.getFirst("limit")))));
+                                //.flatMap(data -> new Integer(data.getFirst("limit")))));
 
         return "userlist";
 

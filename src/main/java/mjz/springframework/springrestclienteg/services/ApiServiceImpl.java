@@ -3,11 +3,17 @@ package mjz.springframework.springrestclienteg.services;
 import mjz.springframework.api.domain.User;
 import mjz.springframework.api.domain.UserData;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
 public class ApiServiceImpl implements ApiService {
@@ -41,5 +47,34 @@ public class ApiServiceImpl implements ApiService {
 
        // UserData userData = restTemplate.getForObject("https://dummyjson.com/users?limit=" + limit, UserData.class);
         return userData.getUsers();
+    }
+
+    @Override
+    public Flux<User> getUsers(Mono<Integer> limit) {
+
+
+        return WebClient
+                .create(api_url) // create a request
+                .get() // specifying that this a get method
+                // since the blocking does not work in this app, I set the limit value directly
+                .uri(uriBuilder -> uriBuilder.queryParam("limit", 7 /*limit.subscribe(Integer::valueOf) *//*limit.subscribeOn(Schedulers.boundedElastic())*//*limit.block()*/).build()) // build the query uri
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .flatMap(resp -> resp.bodyToMono(UserData.class)) // mapping the response object to UserData class
+                .flatMapIterable(UserData::getUsers); // creating a flux of users
+
+        /*
+        // we should use this method since using exchange() method is deprecated
+        return WebClient
+                .create(api_url) // create a request
+                .get() // specifying that this a get method
+                .uri(uriBuilder -> uriBuilder..queryParam("limit", limit).build()) // build the query uri
+                .accept(MediaType.APPLICATION_JSON)
+                .exchangeToMono(resp -> resp.bodyToMono(UserData.class))
+                //.publishOn(Schedulers.elastic())
+                .flatMapIterable(UserData::getUsers); // creating a flux of users
+
+         */
+
     }
 }
